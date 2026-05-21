@@ -5,7 +5,7 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     """
-    健康檢查接口，設置在根路徑 /。
+    健康檢查接口，位於根路徑。
     """
     return {"status": "ok"}
 

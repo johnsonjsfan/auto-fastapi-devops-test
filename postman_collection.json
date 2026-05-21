@@ -1,48 +1,51 @@
 {
-	"info": {
-		"_postman_id": "1234567890abcdef",
-		"name": "FastAPI Health Check Collection",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Check Root Endpoint Health",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Accept",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://localhost:8000/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": "/"
-				}
-			},
-			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "test",
-			"script": {
-				"exec": [
-					"pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
-					"pm.test(\"Response body contains 'ok' status\", function () { var jsonData = pm.response.json(); pm.expect(jsonData).to.have.property('status').that.eql('ok'); });"
-				],
-				"type": "text/javascript"
-			}
-		}
-	]
+    "info": {
+        "_postman_id": "1234567890abcdef",
+        "name": "FastAPI Health Check Collection",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Check Root Endpoint Health",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": ""
+                },
+                "url": {
+                    "raw": "http://localhost:8000/",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8000",
+                    "path": "/"
+                }
+            },
+            "response": []
+        }
+    ],
+    "event": [
+        {
+            "listen": "test",
+            "script": {
+                "exec": [
+                    "pm.response.to.json(function(data) {",
+                    "    pm.expect(data).to.be.an('object');",
+                    "    pm.expect(data).to.have.property('status');",
+                    "    pm.expect(data.status).to.equal('ok');",
+                    "});"
+                ],
+                "type": "text/javascript"
+            }
+        }
+    ]
 }

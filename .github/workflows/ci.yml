@@ -8,7 +8,7 @@ on:
     branches:
       - main
 
-# 設置權限，確保可以讀取內容、寫入 Issue 和推送到 Packages (GHCR)
+# 設置權限，確保可以讀取內容、寫入問題和推送鏡像
 permissions:
   contents: read
   issues: write
@@ -17,32 +17,37 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    environment: production # 假設有 production 環境
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       # =================================================================
-      # 步驟 1: 本地服務啟動與健康檢查 (模擬環境)
+      # 階段 1: 本地服務啟動與功能測試 (Docker Compose)
       # =================================================================
       - name: Build and Start Services via Docker Compose
         run: |
-          # 構建並啟動服務
+          # 啟動服務，並在背景運行
           docker compose up -d --build
           echo "等待容器內的 FastAPI 啟動..."
-          # 設置等待循環，直到服務在根路徑返回 'ok'
+          # 設置等待循環，直到服務在 8000 端口響應到 'ok'
           for i in {1..10}; do
-            if curl -s http://localhost:8000/ | grep -q "ok"; then
+            if curl -s http://localhost:8000 | grep -q "ok"; then
               echo "FastAPI 容器已成功上線！"
-              exit 0
+              break
             fi
             sleep 2
           done
-          echo "錯誤：容器啟動超時，查看容器日誌："
-          docker compose logs
-          exit 1
+          if [ $i -ne 10 ]; then
+            echo "FastAPI 容器已成功上線！"
+          else
+            echo "錯誤：容器啟動超時，查看容器日誌："
+            docker compose logs
+            exit 1
+          fi
 
       # =================================================================
-      # 步驟 2: API 測試 (使用 Newman)
+      # 階段 2: API 測試 (Newman/Postman)
       # =================================================================
       - name: Setup Node.js and Install Newman
         uses: actions/setup-node@v4
@@ -51,22 +56,22 @@ jobs:
       - name: Install Newman and Run Tests
         run: |
           npm install -g newman
-          # 執行 Postman Collection 進行 API 測試
+          # 運行 Postman Collection 進行 API 驗證
           newman run postman_collection.json
 
       # =================================================================
-      # 步驟 3: 安全掃描 (OWASP ZAP Baseline Scan)
+      # 階段 3: 安全掃描 (OWASP ZAP)
       # =================================================================
       - name: OWASP ZAP Baseline Scan
         run: |
           # 創建報告目錄
           mkdir -p zap_reports
-          # 運行 ZAP 掃描，使用 --network=host 確保能訪問本地服務
-          # 注意：這裡使用 || true 確保即使掃描失敗，CI 流程也不會中止
+          # 執行 ZAP 掃描，將結果寫入本地目錄
+          # 注意：使用 --network=host 確保 ZAP 可以訪問本地服務
           docker run --user root -v $GITHUB_WORKSPACE/zap_reports:/zap/wrk/:rw --network=host -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://localhost:8000 -J report_json.json -w report_md.md -r report_html.html || true
 
       # =================================================================
-      # 步驟 4: 上傳掃描報告
+      # 階段 4: 上傳報告
       # =================================================================
       - name: Upload ZAP Reports
         uses: actions/upload-artifact@v4
@@ -76,7 +81,7 @@ jobs:
           path: zap_reports/
 
       # =================================================================
-      # 步驟 5: 鏡像推送 (僅在 main 分支觸發)
+      # 階段 5: 鏡像推送 (僅在 main 分支觸發)
       # =================================================================
       - name: Log in to GitHub Container Registry
         if: github.ref == 'refs/heads/main'
