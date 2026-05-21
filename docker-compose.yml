@@ -11,7 +11,7 @@ services:
       # 確保日誌即時輸出
       - PYTHONUNBUFFERED=1
     restart: always
-    # 設置健康檢查，確保服務啟動後能被檢測到
+    # 設置健康檢查，確保服務啟動後能被正確檢測
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 10s
