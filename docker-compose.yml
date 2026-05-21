@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi_web
+    ports:
+      - "8000:8000"
+    environment:
+      # 確保日誌即時輸出
+      - PYTHONUNBUFFERED=1
+    restart: always
+    # 設置健康檢查，確保服務啟動後能被正確檢測
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
